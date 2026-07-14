@@ -1,0 +1,234 @@
+{
+  "project_name": "Bumpy Buddy",
+  "generated_assets": 23,
+  "palette": {
+    "outline": "#272A31",
+    "vehicle_red": "#EB4334",
+    "accent_orange": "#FF8B30",
+    "accent_yellow": "#FFCD44",
+    "sky_blue": "#49A6E0",
+    "grass_green": "#68B54C",
+    "soil_brown": "#94623A"
+  },
+  "wheel_axle_center": [
+    64,
+    64
+  ],
+  "seam_edge_max_difference": {
+    "ground_x": 0,
+    "ground_y": 0,
+    "surface_x": 0,
+    "hills_far_x": 0,
+    "hills_near_x": 0
+  },
+  "files": [
+    {
+      "path": "public/assets/vehicles/jeep/body.png",
+      "size": [
+        512,
+        256
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/vehicles/jeep/wheel.png",
+      "size": [
+        128,
+        128
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/driver/head.png",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/terrain/countryside/ground.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGB",
+      "transparent": false
+    },
+    {
+      "path": "public/assets/terrain/countryside/surface.png",
+      "size": [
+        512,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/bg/countryside/sky.png",
+      "size": [
+        1024,
+        640
+      ],
+      "mode": "RGB",
+      "transparent": false
+    },
+    {
+      "path": "public/assets/bg/countryside/hills_far.png",
+      "size": [
+        1024,
+        320
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/bg/countryside/hills_near.png",
+      "size": [
+        1024,
+        320
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/bg/countryside/cloud_1.png",
+      "size": [
+        256,
+        128
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/bg/countryside/cloud_2.png",
+      "size": [
+        256,
+        128
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/bg/countryside/cloud_3.png",
+      "size": [
+        256,
+        128
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/pickups/coin.png",
+      "size": [
+        128,
+        128
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/pickups/fuel.png",
+      "size": [
+        128,
+        128
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/ui/btn_gas.png",
+      "size": [
+        256,
+        256
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/ui/btn_brake.png",
+      "size": [
+        256,
+        256
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/ui/panel.png",
+      "size": [
+        192,
+        192
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/ui/icon_coin.png",
+      "size": [
+        64,
+        64
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/ui/icon_fuel.png",
+      "size": [
+        64,
+        64
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/ui/icon_distance.png",
+      "size": [
+        64,
+        64
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/ui/icon_gear.png",
+      "size": [
+        64,
+        64
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/ui/logo.png",
+      "size": [
+        1024,
+        256
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/fx/dust.png",
+      "size": [
+        64,
+        64
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "public/assets/fx/smoke.png",
+      "size": [
+        64,
+        64
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    }
+  ],
+  "validation_issues": []
+}

@@ -1,0 +1,40 @@
+BUMPY BUDDY ASSET VALIDATION
+============================
+Files checked: 23 / 23
+Issues: 0
+
+Seam checks (0 is exact edge match):
+- ground_x: 0
+- ground_y: 0
+- surface_x: 0
+- hills_far_x: 0
+- hills_near_x: 0
+
+Wheel axle center: (64, 64)
+
+File checks:
+- public/assets/vehicles/jeep/body.png — 512x256, RGBA
+- public/assets/vehicles/jeep/wheel.png — 128x128, RGBA
+- public/assets/driver/head.png — 96x96, RGBA
+- public/assets/terrain/countryside/ground.png — 512x512, RGB
+- public/assets/terrain/countryside/surface.png — 512x96, RGBA
+- public/assets/bg/countryside/sky.png — 1024x640, RGB
+- public/assets/bg/countryside/hills_far.png — 1024x320, RGBA
+- public/assets/bg/countryside/hills_near.png — 1024x320, RGBA
+- public/assets/bg/countryside/cloud_1.png — 256x128, RGBA
+- public/assets/bg/countryside/cloud_2.png — 256x128, RGBA
+- public/assets/bg/countryside/cloud_3.png — 256x128, RGBA
+- public/assets/pickups/coin.png — 128x128, RGBA
+- public/assets/pickups/fuel.png — 128x128, RGBA
+- public/assets/ui/btn_gas.png — 256x256, RGBA
+- public/assets/ui/btn_brake.png — 256x256, RGBA
+- public/assets/ui/panel.png — 192x192, RGBA
+- public/assets/ui/icon_coin.png — 64x64, RGBA
+- public/assets/ui/icon_fuel.png — 64x64, RGBA
+- public/assets/ui/icon_distance.png — 64x64, RGBA
+- public/assets/ui/icon_gear.png — 64x64, RGBA
+- public/assets/ui/logo.png — 1024x256, RGBA
+- public/assets/fx/dust.png — 64x64, RGBA
+- public/assets/fx/smoke.png — 64x64, RGBA
+
+All automated checks passed.
