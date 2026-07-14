@@ -1,24 +1,17 @@
 import Phaser from 'phaser';
-import type { World } from 'planck';
+import type { World, Body } from 'planck';
 import { GAME_WIDTH, GAME_HEIGHT, PX_PER_M } from '../config';
 import type { DebugParams } from '../config';
 import { createWorld, FixedStepper, FIXED_DT } from '../core/physics/world';
-import { createFlatGround, createStaticBox } from '../core/physics/terrainBody';
+import { createTerrainBody } from '../core/physics/terrainBody';
 import { createCar, type Car, type DriveInput } from '../core/physics/car';
+import { createHeightFn } from '../core/terrain/generator';
+import { ChunkManager } from '../core/terrain/chunks';
 import { JEEP } from '../data/vehicles';
-import type { Point2 } from '../data/vehicles';
+import { STAGES, DEFAULT_STAGE_ID } from '../data/stages';
 import { CarView } from '../render/carView';
-import { drawGround, drawBox } from '../render/terrainView';
+import { drawGround } from '../render/terrainView';
 import { DebugView } from '../render/debugView';
-
-const GROUND_FROM_X = -30;
-const GROUND_TO_X = 1000;
-/** Ступеньки из статических боксов: подвеска должна видимо пружинить. */
-const STEPS: Array<{ x: number; halfWidth: number; height: number }> = [
-  { x: 25, halfWidth: 1.2, height: 0.15 },
-  { x: 45, halfWidth: 1.2, height: 0.3 },
-  { x: 70, halfWidth: 1.5, height: 0.5 },
-];
 
 const CAMERA_LOOKAHEAD_S = 0.55;
 const CAMERA_LERP = 0.08;
@@ -32,6 +25,9 @@ export class GameScene extends Phaser.Scene {
   private stepper!: FixedStepper;
   private carView!: CarView;
   private debugView: DebugView | null = null;
+  private chunks!: ChunkManager;
+  private chunkBodies = new Map<number, Body>();
+  private chunkGraphics = new Map<number, Phaser.GameObjects.Graphics>();
 
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private keyA!: Phaser.Input.Keyboard.Key;
@@ -52,26 +48,38 @@ export class GameScene extends Phaser.Scene {
     this.autoGas = debug.autoGas;
     this.isDead = false;
     this.camZoom = ZOOM_BASE;
+    this.chunkBodies = new Map();
+    this.chunkGraphics = new Map();
 
-    // --- Физика ---
-    this.world = createWorld();
+    const stage = STAGES[debug.stage ?? DEFAULT_STAGE_ID] ?? STAGES[DEFAULT_STAGE_ID];
+    const seed = debug.seed ?? Math.floor(Math.random() * 2 ** 31);
+
+    // --- Физика и рельеф ---
+    this.world = createWorld(stage.gravityY);
     this.stepper = new FixedStepper();
-    createFlatGround(this.world, GROUND_FROM_X, GROUND_TO_X, 0);
-    for (const s of STEPS) {
-      createStaticBox(this.world, s.x, -s.height / 2, s.halfWidth, s.height / 2);
-    }
-    this.car = createCar(this.world, JEEP, { x: 0, y: -1.0 });
+    const heightFn = createHeightFn(seed, stage.terrain);
+    this.chunks = new ChunkManager(heightFn, {
+      onCreate: (chunk) => {
+        this.chunkBodies.set(chunk.index, createTerrainBody(this.world, chunk.points));
+        this.chunkGraphics.set(chunk.index, drawGround(this, chunk.points));
+      },
+      onDestroy: (chunk) => {
+        const body = this.chunkBodies.get(chunk.index);
+        if (body) {
+          this.world.destroyBody(body);
+          this.chunkBodies.delete(chunk.index);
+        }
+        this.chunkGraphics.get(chunk.index)?.destroy();
+        this.chunkGraphics.delete(chunk.index);
+      },
+    });
+
+    const spawnX = debug.spawnX;
+    this.chunks.update(spawnX);
+    this.car = createCar(this.world, JEEP, { x: spawnX, y: heightFn(spawnX) - 1.0 });
     this.car.onDeath(() => this.onDeath());
 
     // --- Рендер ---
-    const groundPoints: Point2[] = [
-      { x: GROUND_FROM_X, y: 0 },
-      { x: GROUND_TO_X, y: 0 },
-    ];
-    drawGround(this, groundPoints);
-    for (const s of STEPS) {
-      drawBox(this, s.x, -s.height / 2, s.halfWidth, s.height / 2);
-    }
     this.carView = new CarView(this, this.car);
     if (debug.debugDraw) this.debugView = new DebugView(this);
 
@@ -92,11 +100,15 @@ export class GameScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(2000);
     this.speedText = this.add
-      .text(8, 30, '', { fontFamily: 'monospace', fontSize: '18px', color: '#ffffff' })
+      .text(8, 30, `seed=${seed}`, { fontFamily: 'monospace', fontSize: '18px', color: '#ffffff' })
       .setScrollFactor(0)
       .setDepth(2000);
 
     this.cameras.main.setBackgroundColor('#49a6e0');
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.chunks.destroyAll();
+      this.car.destroy();
+    });
   }
 
   private resolveInput(): DriveInput {
@@ -139,6 +151,7 @@ export class GameScene extends Phaser.Scene {
       this.car.setInput(input);
       this.car.step();
       this.world.step(FIXED_DT);
+      this.chunks.update(this.car.chassis.getPosition().x);
     });
 
     this.carView.update();

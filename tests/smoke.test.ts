@@ -4,13 +4,13 @@ import { World, Vec2, Circle } from 'planck';
 
 describe('каркас проекта', () => {
   it('parseDebugParams разбирает URL-параметры отладки', () => {
-    const p = parseDebugParams('?seed=42&stage=desert&auto=gas&debug=1');
-    expect(p).toEqual({ seed: 42, stage: 'desert', autoGas: true, debugDraw: true });
+    const p = parseDebugParams('?seed=42&stage=desert&auto=gas&debug=1&x=500');
+    expect(p).toEqual({ seed: 42, stage: 'desert', autoGas: true, debugDraw: true, spawnX: 500 });
   });
 
   it('parseDebugParams даёт безопасные значения по умолчанию', () => {
     const p = parseDebugParams('');
-    expect(p).toEqual({ seed: null, stage: null, autoGas: false, debugDraw: false });
+    expect(p).toEqual({ seed: null, stage: null, autoGas: false, debugDraw: false, spawnX: 0 });
   });
 
   it('planck работает в Node: тело падает под гравитацией', () => {
