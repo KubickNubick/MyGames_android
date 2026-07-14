@@ -13,7 +13,7 @@ import { mkdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 
 const QUERY = process.env.SHOT_QUERY ?? 'auto=gas&seed=42';
-const WAIT_MS = 4000;
+const WAIT_MS = Number(process.env.SHOT_WAIT_MS ?? 4000);
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
 await server.listen();
