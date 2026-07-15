@@ -5,11 +5,17 @@
 import { NO_UPGRADES, UPGRADES, type UpgradeLevels, UPGRADE_BRANCHES } from '../../data/upgrades';
 import { DEFAULT_STAGE_ID } from '../../data/stages';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export interface VehicleSave {
   owned: boolean;
   upgrades: UpgradeLevels;
+}
+
+export interface AudioSettings {
+  /** Общая громкость 0..1. */
+  volume: number;
+  muted: boolean;
 }
 
 export interface SaveData {
@@ -19,7 +25,10 @@ export interface SaveData {
   selectedVehicle: string;
   selectedStage: string;
   bestDistance: Record<string, number>;
+  settings: AudioSettings;
 }
+
+export const DEFAULT_SETTINGS: AudioSettings = { volume: 0.8, muted: false };
 
 export function defaultSave(): SaveData {
   return {
@@ -31,6 +40,7 @@ export function defaultSave(): SaveData {
     selectedVehicle: 'jeep',
     selectedStage: DEFAULT_STAGE_ID,
     bestDistance: {},
+    settings: { ...DEFAULT_SETTINGS },
   };
 }
 
@@ -52,8 +62,17 @@ function normUpgrades(v: unknown): UpgradeLevels {
   return out;
 }
 
+function normSettings(v: unknown): AudioSettings {
+  if (!isObject(v)) return { ...DEFAULT_SETTINGS };
+  const volume =
+    typeof v.volume === 'number' && Number.isFinite(v.volume)
+      ? Math.min(1, Math.max(0, v.volume))
+      : DEFAULT_SETTINGS.volume;
+  return { volume, muted: v.muted === true };
+}
+
 /** Нормализация данных текущей версии: недостающее — из дефолта, лишнее — отбросить. */
-function normalizeV1(raw: Record<string, unknown>): SaveData {
+function normalizeCurrent(raw: Record<string, unknown>): SaveData {
   const base = defaultSave();
 
   const vehicles: Record<string, VehicleSave> = {};
@@ -86,6 +105,7 @@ function normalizeV1(raw: Record<string, unknown>): SaveData {
     selectedVehicle,
     selectedStage: typeof raw.selectedStage === 'string' ? raw.selectedStage : base.selectedStage,
     bestDistance,
+    settings: normSettings(raw.settings),
   };
 }
 
@@ -105,8 +125,11 @@ export function migrateSave(json: string | null): SaveData {
   if (!isObject(raw)) return defaultSave();
 
   switch (raw.version) {
+    case 1:
+      // v1 → v2: добавились settings; normSettings подставит дефолт
+      return normalizeCurrent(raw);
     case SAVE_VERSION:
-      return normalizeV1(raw);
+      return normalizeCurrent(raw);
     default:
       // неизвестная (в т.ч. будущая) версия — безопасный дефолт
       return defaultSave();

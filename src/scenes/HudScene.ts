@@ -78,6 +78,16 @@ export class HudScene extends Phaser.Scene {
         strokeThickness: 4,
       })
       .setOrigin(0.5);
+
+    // Кнопка паузы (и для тача).
+    const pauseBtn = this.add
+      .text(cx + BAR_W / 2 + 46, 24, '⏸', { fontFamily: 'monospace', fontSize: '30px', color: '#ffffff' })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    pauseBtn.on('pointerdown', () => {
+      const game = this.scene.get('Game') as Phaser.Scene & { pauseGame?: () => void };
+      game.pauseGame?.();
+    });
   }
 
   update(time: number): void {

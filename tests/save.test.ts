@@ -17,6 +17,31 @@ describe('миграция сейва', () => {
     expect(migrateSave(JSON.stringify({ coins: 5000 }))).toEqual(defaultSave());
   });
 
+  it('миграция v1 → v2: прогресс сохраняется, настройки получают дефолт', () => {
+    const v1 = {
+      version: 1,
+      coins: 4095,
+      vehicles: {
+        jeep: { owned: true, upgrades: { engine: 2, suspension: 0, tires: 1, fourWheelDrive: 0 } },
+      },
+      selectedVehicle: 'jeep',
+      selectedStage: 'moon',
+      bestDistance: { countryside: 137 },
+    };
+    const save = migrateSave(JSON.stringify(v1));
+    expect(save.version).toBe(SAVE_VERSION);
+    expect(save.coins).toBe(4095);
+    expect(save.vehicles.jeep.upgrades.engine).toBe(2);
+    expect(save.selectedStage).toBe('moon');
+    expect(save.bestDistance.countryside).toBe(137);
+    expect(save.settings).toEqual({ volume: 0.8, muted: false });
+  });
+
+  it('настройки v2 нормализуются: громкость зажимается в [0, 1]', () => {
+    const save = migrateSave(JSON.stringify({ version: SAVE_VERSION, settings: { volume: 5, muted: 'да' } }));
+    expect(save.settings).toEqual({ volume: 1, muted: false });
+  });
+
   it('текущая версия: частичные данные нормализуются', () => {
     const raw = JSON.stringify({ version: SAVE_VERSION, coins: 123.9 });
     const save = migrateSave(raw);

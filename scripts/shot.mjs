@@ -6,6 +6,7 @@
  * Опции через env:
  *   SHOT_QUERY  — строка query, по умолчанию "auto=gas&seed=42"
  *   SHOT_NAME   — имя файла без расширения, по умолчанию из query + время
+ *   SHOT_PRESS  — клавиша, нажимаемая за 1 с до скриншота (например "KeyP")
  */
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
@@ -34,7 +35,11 @@ try {
   });
 
   await page.goto(url, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(WAIT_MS);
+  await page.waitForTimeout(Math.max(0, WAIT_MS - 1000));
+  if (process.env.SHOT_PRESS) {
+    await page.keyboard.press(process.env.SHOT_PRESS);
+  }
+  await page.waitForTimeout(Math.min(WAIT_MS, 1000));
 
   mkdirSync('shots', { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);

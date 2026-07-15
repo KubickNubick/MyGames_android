@@ -18,10 +18,12 @@ import { FUEL, COIN_GROUPS } from '../data/gameplay';
 import { applyUpgrades } from '../data/upgrades';
 import type { PlayerProfile } from '../core/save/profile';
 import { CarView } from '../render/carView';
+import { CarFx } from '../render/carFx';
 import { TerrainChunkView } from '../render/terrainView';
 import { Parallax } from '../render/parallax';
 import { drawPickup, destroyPickupView } from '../render/pickupView';
 import { DebugView } from '../render/debugView';
+import { GameAudio } from '../audio/gameAudio';
 import type { HudData } from './HudScene';
 import type { ResultsData } from './ResultsScene';
 
@@ -55,6 +57,8 @@ export class GameScene extends Phaser.Scene {
   private autoGas = false;
   private camZoom = ZOOM_BASE;
   private stageId = DEFAULT_STAGE_ID;
+  private audio!: GameAudio;
+  private carFx!: CarFx;
 
   constructor() {
     super('Game');
@@ -112,7 +116,11 @@ export class GameScene extends Phaser.Scene {
     this.run = new Run(spawnX);
     this.tank = new FuelTank(FUEL.tankCapacity, FUEL.consumptionPerSecond);
     this.flips = new FlipTracker();
-    this.car.onDeath(() => this.run.notifyDeath());
+    this.car.onDeath(() => {
+      this.run.notifyDeath();
+      this.audio.playDeath();
+      this.cameras.main.shake(220, 0.012);
+    });
     this.run.onChange((state) => {
       if (state === 'results') this.showResults();
     });
@@ -127,16 +135,20 @@ export class GameScene extends Phaser.Scene {
     this.pickups.onCollect((p) => {
       if (p.kind === 'coin') {
         this.run.addCoins(COIN_GROUPS.coinValue);
+        this.audio.playCoin();
       } else if (this.run.isDriving) {
         this.tank.refill();
         this.spawnPopup('ТОПЛИВО ✔', 0x68b54c);
+        this.audio.playFuel();
       }
     });
     this.pickups.update(spawnX);
 
-    // --- Рендер ---
+    // --- Рендер и звук ---
     this.parallax = new Parallax(this, stage.visuals);
     this.carView = new CarView(this, this.car);
+    this.carFx = new CarFx(this, this.car);
+    this.audio = new GameAudio(this, profile);
     if (debug.debugDraw) this.debugView = new DebugView(this);
     this.cameras.main.setBackgroundColor(stage.visuals.backgroundColor);
 
@@ -147,6 +159,8 @@ export class GameScene extends Phaser.Scene {
     this.keyD = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
     this.input.addPointer(1);
     keyboard.on('keydown-R', () => this.scene.restart());
+    keyboard.on('keydown-P', () => this.pauseGame());
+    keyboard.on('keydown-ESC', () => this.pauseGame());
 
     // --- HUD поверх игры ---
     if (this.scene.isActive('Hud')) this.scene.get('Hud').scene.restart();
@@ -158,6 +172,8 @@ export class GameScene extends Phaser.Scene {
       this.chunks.destroyAll();
       this.car.destroy();
       this.parallax.destroy();
+      this.carFx.destroy();
+      this.audio.destroy();
     });
   }
 
@@ -176,6 +192,21 @@ export class GameScene extends Phaser.Scene {
     if (brake) return 'brake'; // тормоз приоритетнее
     if (gas) return 'gas';
     return 'none';
+  }
+
+  /** Пауза: физика останавливается вместе со сценой, звук двигателя — явно. */
+  pauseGame(): void {
+    if (!this.scene.isPaused() && this.scene.isActive()) {
+      this.audio.setEnginePaused(true);
+      this.scene.pause();
+      this.scene.launch('Pause');
+    }
+  }
+
+  /** Вызывается PauseScene после resume. */
+  onResumed(): void {
+    this.audio.applySettings();
+    this.audio.setEnginePaused(false);
   }
 
   private showResults(): void {
@@ -233,9 +264,19 @@ export class GameScene extends Phaser.Scene {
     const input: DriveInput = this.run.isDriving && !this.tank.isEmpty ? rawInput : 'none';
 
     this.stepper.update(delta / 1000, () => {
+      const airborneBefore = this.car.isAirborne();
+      const vyBefore = this.car.chassis.getLinearVelocity().y;
+
       this.car.setInput(input);
       this.car.step();
       this.world.step(FIXED_DT);
+
+      // Жёсткое приземление: тряска камеры + всплеск пыли.
+      if (airborneBefore && !this.car.isAirborne() && vyBefore > 6) {
+        const intensity = Phaser.Math.Clamp((vyBefore - 6) / 8, 0, 1);
+        this.cameras.main.shake(160, 0.002 + 0.008 * intensity);
+        this.carFx.landingBurst(intensity);
+      }
 
       const pos = this.car.chassis.getPosition();
       if (this.run.isDriving) {
@@ -250,13 +291,22 @@ export class GameScene extends Phaser.Scene {
           reward.entries.forEach((entry, i) =>
             this.spawnPopup(`${entry.label} +${entry.coins}`, 0xffcd44, i * 250),
           );
-          this.run.addCoins(reward.coins);
+          if (reward.coins > 0) {
+            this.run.addCoins(reward.coins);
+            this.audio.playFlip();
+          }
         }
       }
       this.run.update(FIXED_DT, pos.x, Math.abs(this.car.getForwardSpeed()), this.tank.isEmpty);
       this.chunks.update(pos.x);
       this.pickups.update(pos.x);
     });
+
+    const throttling = input !== 'none' && !this.car.dead;
+    const wheelSpeed01 =
+      Math.abs(this.car.wheels.rear.getAngularVelocity()) / this.car.params.engine.maxWheelSpeed;
+    this.audio.updateEngine(wheelSpeed01, throttling, delta);
+    this.carFx.update(time, throttling);
 
     this.carView.update(delta);
     this.debugView?.update(this.world);

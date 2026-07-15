@@ -18,8 +18,8 @@ export interface DebugParams {
   debugDraw: boolean;
   /** Стартовый x спавна, м (телепорт на сложный участок для отладки). */
   spawnX: number;
-  /** Стартовая сцена: game (по умолчанию) или garage. */
-  scene: 'game' | 'garage';
+  /** Стартовая сцена: menu (по умолчанию), game или garage. */
+  scene: 'menu' | 'game' | 'garage';
 }
 
 function numberParam(params: URLSearchParams, name: string): number | null {
@@ -37,6 +37,10 @@ export function parseDebugParams(search: string): DebugParams {
     autoGas: params.get('auto') === 'gas',
     debugDraw: params.get('debug') === '1',
     spawnX: numberParam(params, 'x') ?? 0,
-    scene: params.get('scene') === 'garage' ? 'garage' : 'game',
+    scene: sceneParam(params.get('scene')),
   };
+}
+
+function sceneParam(raw: string | null): 'menu' | 'game' | 'garage' {
+  return raw === 'garage' || raw === 'game' ? raw : 'menu';
 }

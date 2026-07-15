@@ -41,7 +41,9 @@ export class Parallax {
       depth: number,
     ): Phaser.GameObjects.TileSprite | null => {
       if (!hasTexture(scene, key)) return null;
-      const ts = scene.add.tileSprite(0, 0, GAME_WIDTH * OVERSCAN, 320, key);
+      // высота чуть меньше текстуры + сдвиг: без texture bleeding на краях повтора
+      const ts = scene.add.tileSprite(0, 0, GAME_WIDTH * OVERSCAN, 316, key);
+      ts.tilePositionY = 2;
       ts.setOrigin(0.5, 1);
       ts.setDepth(depth);
       if (color !== null) ts.setTintFill(color);

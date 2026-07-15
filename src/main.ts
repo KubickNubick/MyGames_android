@@ -6,6 +6,8 @@ import { GameScene } from './scenes/GameScene';
 import { HudScene } from './scenes/HudScene';
 import { ResultsScene } from './scenes/ResultsScene';
 import { GarageScene } from './scenes/GarageScene';
+import { MenuScene } from './scenes/MenuScene';
+import { PauseScene } from './scenes/PauseScene';
 
 new Phaser.Game({
   type: Phaser.AUTO,
@@ -17,5 +19,5 @@ new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [BootScene, PreloadScene, GameScene, HudScene, ResultsScene, GarageScene],
+  scene: [BootScene, PreloadScene, MenuScene, GameScene, HudScene, ResultsScene, GarageScene, PauseScene],
 });

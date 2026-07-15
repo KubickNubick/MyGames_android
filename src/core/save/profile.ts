@@ -3,7 +3,7 @@
  * каждое изменение сразу персистится. Чистый модуль (инвариант №3).
  */
 import type { SaveStorage } from './storage';
-import { migrateSave, type SaveData, type VehicleSave } from './schema';
+import { migrateSave, type SaveData, type VehicleSave, type AudioSettings } from './schema';
 import { upgradePrice, UPGRADES, type UpgradeBranch, type UpgradeLevels } from '../../data/upgrades';
 
 export class PlayerProfile {
@@ -64,6 +64,20 @@ export class PlayerProfile {
     vehicle.upgrades[branch] += 1;
     this.persist();
     return true;
+  }
+
+  get settings(): AudioSettings {
+    return { ...this.data.settings };
+  }
+
+  setVolume(volume: number): void {
+    this.data.settings.volume = Math.min(1, Math.max(0, volume));
+    this.persist();
+  }
+
+  setMuted(muted: boolean): void {
+    this.data.settings.muted = muted;
+    this.persist();
   }
 
   /** Выбор этапа (валидность id проверяет вызывающий по data/stages). */

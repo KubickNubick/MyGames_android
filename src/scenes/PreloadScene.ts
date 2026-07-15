@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config';
 import type { DebugParams } from '../config';
 import { TEX } from '../render/textures';
+import { AUDIO_KEYS } from '../audio/gameAudio';
 
 /**
  * Preload: загрузка ассетов по docs/ASSETS.md.
@@ -42,10 +43,23 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image(TEX.iconCoin, 'assets/ui/icon_coin.png');
     this.load.image(TEX.iconFuel, 'assets/ui/icon_fuel.png');
     this.load.image(TEX.iconDistance, 'assets/ui/icon_distance.png');
+    this.load.image('ui_logo', 'assets/ui/logo.png');
+    this.load.image('fx_dust', 'assets/fx/dust.png');
+    this.load.image('fx_smoke', 'assets/fx/smoke.png');
+
+    this.load.audio(AUDIO_KEYS.engine, 'assets/audio/engine_loop.wav');
+    this.load.audio(AUDIO_KEYS.coin, 'assets/audio/coin.wav');
+    this.load.audio(AUDIO_KEYS.flip, 'assets/audio/flip.wav');
+    this.load.audio(AUDIO_KEYS.death, 'assets/audio/death.wav');
+    this.load.audio(AUDIO_KEYS.fuel, 'assets/audio/fuel.wav');
+    this.load.audio(AUDIO_KEYS.music, 'assets/audio/music_loop.wav');
   }
 
   create(): void {
     const debug = this.registry.get('debug') as DebugParams;
-    this.scene.start(debug.scene === 'garage' ? 'Garage' : 'Game');
+    // авто-газ (headless-скриншоты) идёт сразу в игру, минуя меню
+    if (debug.scene === 'garage') this.scene.start('Garage');
+    else if (debug.scene === 'game' || debug.autoGas) this.scene.start('Game');
+    else this.scene.start('Menu');
   }
 }

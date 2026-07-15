@@ -23,7 +23,7 @@ describe('каркас проекта', () => {
       autoGas: false,
       debugDraw: false,
       spawnX: 0,
-      scene: 'game',
+      scene: 'menu',
     });
   });
 
