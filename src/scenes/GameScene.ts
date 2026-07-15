@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { World, Body } from 'planck';
-import { GAME_WIDTH, PX_PER_M } from '../config';
+import { GAME_WIDTH, PX_PER_M, RES_SCALE } from '../config';
 import type { DebugParams } from '../config';
 import { createWorld, FixedStepper, FIXED_DT } from '../core/physics/world';
 import { createTerrainBody } from '../core/physics/terrainBody';
@@ -335,6 +335,7 @@ export class GameScene extends Phaser.Scene {
 
     const zoomTarget = Phaser.Math.Clamp(ZOOM_BASE - Math.abs(vx) * ZOOM_PER_MS, ZOOM_MIN, ZOOM_BASE);
     this.camZoom = Phaser.Math.Linear(this.camZoom, zoomTarget, 0.04);
-    cam.setZoom(this.camZoom);
+    // RES_SCALE: при пониженном внутреннем разрешении мир виден той же ширины
+    cam.setZoom(this.camZoom * RES_SCALE);
   }
 }

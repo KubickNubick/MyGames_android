@@ -44,6 +44,8 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image(TEX.iconFuel, 'assets/ui/icon_fuel.png');
     this.load.image(TEX.iconDistance, 'assets/ui/icon_distance.png');
     this.load.image('ui_logo', 'assets/ui/logo.png');
+    this.load.image('btn_gas', 'assets/ui/btn_gas.png');
+    this.load.image('btn_brake', 'assets/ui/btn_brake.png');
     this.load.image('fx_dust', 'assets/fx/dust.png');
     this.load.image('fx_smoke', 'assets/fx/smoke.png');
 

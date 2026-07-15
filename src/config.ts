@@ -6,9 +6,24 @@
 /** Конверсия метры → пиксели. Используется ТОЛЬКО в src/render/. */
 export const PX_PER_M = 50;
 
-/** Размер игрового канваса. */
-export const GAME_WIDTH = 1280;
-export const GAME_HEIGHT = 720;
+/** Базовое разрешение канваса. */
+const BASE_WIDTH = 1280;
+const BASE_HEIGHT = 720;
+
+/**
+ * Масштаб внутреннего разрешения для слабых устройств: ?res=0.75 (0.5–1).
+ * Камера компенсирует зумом — мир виден одинаково при любом res.
+ */
+function resScale(): number {
+  if (typeof window === 'undefined') return 1;
+  const raw = new URLSearchParams(window.location.search).get('res');
+  const value = raw !== null ? Number(raw) : 1;
+  return Number.isFinite(value) ? Math.min(1, Math.max(0.5, value)) : 1;
+}
+
+export const RES_SCALE = resScale();
+export const GAME_WIDTH = Math.round(BASE_WIDTH * RES_SCALE);
+export const GAME_HEIGHT = Math.round(BASE_HEIGHT * RES_SCALE);
 
 /** URL-параметры отладки: ?seed=42&stage=countryside&auto=gas&debug=1&x=500 */
 export interface DebugParams {

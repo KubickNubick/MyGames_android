@@ -10,13 +10,19 @@
     "test": "vitest run",
     "shot": "node scripts/shot.mjs",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "android:sync": "npm run build && cap sync android",
+    "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug"
   },
   "dependencies": {
+    "@capacitor/android": "^7.6.8",
+    "@capacitor/core": "^7.6.8",
+    "@capacitor/preferences": "^7.0.4",
     "phaser": "^3.90.0",
     "planck": "^1.4.2"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.6.8",
     "@eslint/js": "^9.30.0",
     "eslint": "^9.30.0",
     "eslint-config-prettier": "^10.1.0",
