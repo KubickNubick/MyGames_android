@@ -12,9 +12,11 @@ import { FuelTank } from '../core/gameplay/fuel';
 import { FlipTracker } from '../core/gameplay/flips';
 import { computeJumpReward } from '../core/gameplay/score';
 import { PickupPlanner, PickupField } from '../core/gameplay/pickups';
-import { JEEP } from '../data/vehicles';
+import { VEHICLES, JEEP } from '../data/vehicles';
 import { STAGES, DEFAULT_STAGE_ID } from '../data/stages';
 import { FUEL, COIN_GROUPS } from '../data/gameplay';
+import { applyUpgrades } from '../data/upgrades';
+import type { PlayerProfile } from '../core/save/profile';
 import { CarView } from '../render/carView';
 import { drawGround } from '../render/terrainView';
 import { drawPickup } from '../render/pickupView';
@@ -50,6 +52,7 @@ export class GameScene extends Phaser.Scene {
   private keyD!: Phaser.Input.Keyboard.Key;
   private autoGas = false;
   private camZoom = ZOOM_BASE;
+  private stageId = DEFAULT_STAGE_ID;
 
   constructor() {
     super('Game');
@@ -65,7 +68,11 @@ export class GameScene extends Phaser.Scene {
     this.popupSlot = 0;
 
     const stage = STAGES[debug.stage ?? DEFAULT_STAGE_ID] ?? STAGES[DEFAULT_STAGE_ID];
+    this.stageId = stage.id;
     const seed = debug.seed ?? Math.floor(Math.random() * 2 ** 31);
+    const profile = this.registry.get('profile') as PlayerProfile;
+    // Параметры машины = база из data/vehicles + купленные апгрейды.
+    const vehicleParams = applyUpgrades(VEHICLES[profile.selectedVehicle] ?? JEEP, profile.getUpgrades());
 
     // --- Физика и рельеф ---
     this.world = createWorld(stage.gravityY);
@@ -89,7 +96,7 @@ export class GameScene extends Phaser.Scene {
 
     const spawnX = debug.spawnX;
     this.chunks.update(spawnX);
-    this.car = createCar(this.world, JEEP, { x: spawnX, y: heightFn(spawnX) - 1.0 });
+    this.car = createCar(this.world, vehicleParams, { x: spawnX, y: heightFn(spawnX) - 1.0 });
 
     // --- Игровой цикл ---
     this.run = new Run(spawnX);
@@ -159,10 +166,17 @@ export class GameScene extends Phaser.Scene {
   }
 
   private showResults(): void {
+    // Банкуем заработанное в профиль (сейв) и проверяем рекорд.
+    const profile = this.registry.get('profile') as PlayerProfile;
+    profile.addCoins(this.run.coins);
+    const isRecord = profile.updateBestDistance(this.stageId, this.run.distance);
+
     const data: ResultsData = {
       distance: this.run.distance,
       coins: this.run.coins,
       reason: this.run.endReason ?? 'crash',
+      isRecord,
+      balance: profile.coins,
     };
     this.scene.pause();
     this.scene.launch('Results', data);

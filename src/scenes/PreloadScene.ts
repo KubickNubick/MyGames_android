@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import type { DebugParams } from '../config';
 
 /**
  * Preload: загрузка ассетов. Пока (фаза 0) грузить нечего —
@@ -10,6 +11,7 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.scene.start('Game');
+    const debug = this.registry.get('debug') as DebugParams;
+    this.scene.start(debug.scene === 'garage' ? 'Garage' : 'Game');
   }
 }
