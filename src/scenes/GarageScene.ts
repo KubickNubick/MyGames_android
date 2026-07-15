@@ -3,7 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT } from '../config';
 import type { PlayerProfile } from '../core/save/profile';
 import { VEHICLES, JEEP } from '../data/vehicles';
 import { applyUpgrades, UPGRADES, UPGRADE_BRANCHES, type UpgradeBranch } from '../data/upgrades';
-import { STAGES, DEFAULT_STAGE_ID } from '../data/stages';
+import { STAGES, STAGE_IDS, DEFAULT_STAGE_ID } from '../data/stages';
 import { drawVehiclePreview } from '../render/vehiclePreview';
 
 interface UpgradeRow {
@@ -25,6 +25,7 @@ export class GarageScene extends Phaser.Scene {
   private coinsText!: Phaser.GameObjects.Text;
   private statsText!: Phaser.GameObjects.Text;
   private recordText!: Phaser.GameObjects.Text;
+  private stageText!: Phaser.GameObjects.Text;
 
   constructor() {
     super('Garage');
@@ -67,6 +68,21 @@ export class GarageScene extends Phaser.Scene {
     // Ветки апгрейдов.
     UPGRADE_BRANCHES.forEach((branch, i) => this.makeRow(branch, 150 + i * 95));
 
+    // Выбор этапа: ◀ Название ▶ (сохраняется в профиль).
+    const stageY = GAME_HEIGHT - 70;
+    this.stageText = this.add
+      .text(310, stageY, '', { fontFamily: 'monospace', fontSize: '24px', color: '#ffffff' })
+      .setOrigin(0.5);
+    const makeArrow = (x: number, label: string, dir: 1 | -1): void => {
+      const arrow = this.add
+        .text(x, stageY, label, { fontFamily: 'monospace', fontSize: '32px', color: '#ffcd44' })
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+      arrow.on('pointerdown', () => this.cycleStage(dir));
+    };
+    makeArrow(140, '◀', -1);
+    makeArrow(480, '▶', 1);
+
     // В заезд.
     const startBg = this.add
       .rectangle(GAME_WIDTH - 190, GAME_HEIGHT - 70, 300, 70, 0x68b54c)
@@ -85,6 +101,14 @@ export class GarageScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-ENTER', () => this.scene.start('Game'));
     this.input.keyboard?.on('keydown-SPACE', () => this.scene.start('Game'));
 
+    this.refresh();
+  }
+
+  private cycleStage(dir: 1 | -1): void {
+    const current = this.profile.selectedStage in STAGES ? this.profile.selectedStage : DEFAULT_STAGE_ID;
+    const i = STAGE_IDS.indexOf(current);
+    const next = STAGE_IDS[(i + dir + STAGE_IDS.length) % STAGE_IDS.length];
+    this.profile.setSelectedStage(next);
     this.refresh();
   }
 
@@ -164,5 +188,6 @@ export class GarageScene extends Phaser.Scene {
     const stageId = this.profile.selectedStage in STAGES ? this.profile.selectedStage : DEFAULT_STAGE_ID;
     const best = this.profile.getBestDistance(stageId);
     this.recordText.setText(best > 0 ? `Рекорд (${STAGES[stageId].title}): ${best} м` : 'Рекорда пока нет');
+    this.stageText.setText(`ЭТАП: ${STAGES[stageId].title}`);
   }
 }

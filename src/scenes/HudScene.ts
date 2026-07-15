@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH } from '../config';
 import { FUEL } from '../data/gameplay';
 import type { RunState } from '../core/gameplay/run';
+import { TEX, hasTexture } from '../render/textures';
 
 /** Данные для HUD; GameScene кладёт их в registry каждый кадр. */
 export interface HudData {
@@ -39,6 +40,9 @@ export class HudScene extends Phaser.Scene {
     this.fuelLabel = this.add
       .text(cx, 24, 'ТОПЛИВО', { fontFamily: 'monospace', fontSize: '13px', color: '#ffffff' })
       .setOrigin(0.5);
+    if (hasTexture(this, TEX.iconFuel)) {
+      this.add.image(cx - BAR_W / 2 - 24, 24, TEX.iconFuel).setDisplaySize(30, 30);
+    }
 
     this.coinsText = this.add.text(GAME_WIDTH - 16, 12, '', {
       fontFamily: 'monospace',
@@ -46,12 +50,18 @@ export class HudScene extends Phaser.Scene {
       color: '#ffcd44',
     });
     this.coinsText.setOrigin(1, 0);
+    if (hasTexture(this, TEX.iconCoin)) {
+      this.add.image(GAME_WIDTH - 116, 26, TEX.iconCoin).setDisplaySize(28, 28);
+    }
 
-    this.distanceText = this.add.text(16, 12, '', {
+    this.distanceText = this.add.text(48, 12, '', {
       fontFamily: 'monospace',
       fontSize: '24px',
       color: '#ffffff',
     });
+    if (hasTexture(this, TEX.iconDistance)) {
+      this.add.image(26, 26, TEX.iconDistance).setDisplaySize(28, 28);
+    }
 
     this.fpsText = this.add.text(16, 44, '', {
       fontFamily: 'monospace',
@@ -82,7 +92,7 @@ export class HudScene extends Phaser.Scene {
     this.fuelFill.setVisible(blink && fraction > 0);
     this.fuelLabel.setText(fraction > 0 ? 'ТОПЛИВО' : 'БАК ПУСТ');
 
-    this.coinsText.setText(`● ${data.coins}`);
+    this.coinsText.setText(`${data.coins}`);
     this.distanceText.setText(`${Math.floor(data.distance)} м`);
     this.fpsText.setText(`FPS: ${Math.round(data.fps)}`);
     this.hintText.setVisible(data.state === 'ready');

@@ -55,11 +55,12 @@ export const JEEP_WHEEL = {
 
 /**
  * Голова водителя: 96×96 px. Чисто визуальный элемент на «пружинке».
- * Стартовый якорь от центра кузова (докрутить глазами в фазе 5).
+ * Якорь докручен глазами в фазе 5 по jeep_composite_preview.png:
+ * голова в кабине, видна через прозрачное окно кузова (рисуется позади).
  */
 export const DRIVER_HEAD = {
   textureKey: 'driver_head', // public/assets/driver/head.png
-  anchor: { x: -0.1, y: -0.55 },
+  anchor: { x: -0.13, y: -0.22 },
 } as const;
 
 /** Тайлы рельефа Countryside: ground 512×512 (бесшовен X/Y), surface 512×96 (X). */

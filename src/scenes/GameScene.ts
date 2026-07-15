@@ -18,8 +18,9 @@ import { FUEL, COIN_GROUPS } from '../data/gameplay';
 import { applyUpgrades } from '../data/upgrades';
 import type { PlayerProfile } from '../core/save/profile';
 import { CarView } from '../render/carView';
-import { drawGround } from '../render/terrainView';
-import { drawPickup } from '../render/pickupView';
+import { TerrainChunkView } from '../render/terrainView';
+import { Parallax } from '../render/parallax';
+import { drawPickup, destroyPickupView } from '../render/pickupView';
 import { DebugView } from '../render/debugView';
 import type { HudData } from './HudScene';
 import type { ResultsData } from './ResultsScene';
@@ -38,13 +39,14 @@ export class GameScene extends Phaser.Scene {
   private debugView: DebugView | null = null;
   private chunks!: ChunkManager;
   private chunkBodies = new Map<number, Body>();
-  private chunkGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  private chunkViews = new Map<number, TerrainChunkView>();
+  private parallax!: Parallax;
 
   private run!: Run;
   private tank!: FuelTank;
   private flips!: FlipTracker;
   private pickups!: PickupField;
-  private pickupGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  private pickupViews = new Map<number, Phaser.GameObjects.GameObject>();
   private popupSlot = 0;
 
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -63,14 +65,15 @@ export class GameScene extends Phaser.Scene {
     this.autoGas = debug.autoGas;
     this.camZoom = ZOOM_BASE;
     this.chunkBodies = new Map();
-    this.chunkGraphics = new Map();
-    this.pickupGraphics = new Map();
+    this.chunkViews = new Map();
+    this.pickupViews = new Map();
     this.popupSlot = 0;
 
-    const stage = STAGES[debug.stage ?? DEFAULT_STAGE_ID] ?? STAGES[DEFAULT_STAGE_ID];
+    const profile = this.registry.get('profile') as PlayerProfile;
+    // Этап: URL-параметр приоритетнее выбранного в гараже.
+    const stage = STAGES[debug.stage ?? profile.selectedStage] ?? STAGES[DEFAULT_STAGE_ID];
     this.stageId = stage.id;
     const seed = debug.seed ?? Math.floor(Math.random() * 2 ** 31);
-    const profile = this.registry.get('profile') as PlayerProfile;
     // Параметры машины = база из data/vehicles + купленные апгрейды.
     const vehicleParams = applyUpgrades(VEHICLES[profile.selectedVehicle] ?? JEEP, profile.getUpgrades());
 
@@ -78,10 +81,17 @@ export class GameScene extends Phaser.Scene {
     this.world = createWorld(stage.gravityY);
     this.stepper = new FixedStepper();
     const heightFn = createHeightFn(seed, stage.terrain);
+    const step = 0.75;
     this.chunks = new ChunkManager(heightFn, {
       onCreate: (chunk) => {
         this.chunkBodies.set(chunk.index, createTerrainBody(this.world, chunk.points));
-        this.chunkGraphics.set(chunk.index, drawGround(this, chunk.points));
+        // крайние точки соседних чанков — полоса поверхности без швов на стыках
+        const before = { x: chunk.startX - step, y: heightFn(chunk.startX - step) };
+        const after = { x: chunk.endX + step, y: heightFn(chunk.endX + step) };
+        this.chunkViews.set(
+          chunk.index,
+          new TerrainChunkView(this, chunk.points, stage.visuals, before, after),
+        );
       },
       onDestroy: (chunk) => {
         const body = this.chunkBodies.get(chunk.index);
@@ -89,8 +99,8 @@ export class GameScene extends Phaser.Scene {
           this.world.destroyBody(body);
           this.chunkBodies.delete(chunk.index);
         }
-        this.chunkGraphics.get(chunk.index)?.destroy();
-        this.chunkGraphics.delete(chunk.index);
+        this.chunkViews.get(chunk.index)?.destroy();
+        this.chunkViews.delete(chunk.index);
       },
     });
 
@@ -108,10 +118,11 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.pickups = new PickupField(this.world, new PickupPlanner(seed, heightFn));
-    this.pickups.onSpawn((p) => this.pickupGraphics.set(p.id, drawPickup(this, p)));
+    this.pickups.onSpawn((p) => this.pickupViews.set(p.id, drawPickup(this, p)));
     this.pickups.onRemove((p) => {
-      this.pickupGraphics.get(p.id)?.destroy();
-      this.pickupGraphics.delete(p.id);
+      const view = this.pickupViews.get(p.id);
+      if (view) destroyPickupView(this, view);
+      this.pickupViews.delete(p.id);
     });
     this.pickups.onCollect((p) => {
       if (p.kind === 'coin') {
@@ -124,9 +135,10 @@ export class GameScene extends Phaser.Scene {
     this.pickups.update(spawnX);
 
     // --- Рендер ---
+    this.parallax = new Parallax(this, stage.visuals);
     this.carView = new CarView(this, this.car);
     if (debug.debugDraw) this.debugView = new DebugView(this);
-    this.cameras.main.setBackgroundColor('#49a6e0');
+    this.cameras.main.setBackgroundColor(stage.visuals.backgroundColor);
 
     // --- Ввод: газ = D/→/правая половина экрана, тормоз = A/←/левая ---
     const keyboard = this.input.keyboard!;
@@ -145,6 +157,7 @@ export class GameScene extends Phaser.Scene {
       this.pickups.destroy();
       this.chunks.destroyAll();
       this.car.destroy();
+      this.parallax.destroy();
     });
   }
 
@@ -213,7 +226,7 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  update(_time: number, delta: number): void {
+  update(time: number, delta: number): void {
     const rawInput = this.resolveInput();
     if (this.run.state === 'ready' && rawInput !== 'none') this.run.start();
     // Бак пуст ⇒ мотор глохнет (и газ, и реверс, и air control).
@@ -245,9 +258,10 @@ export class GameScene extends Phaser.Scene {
       this.pickups.update(pos.x);
     });
 
-    this.carView.update();
+    this.carView.update(delta);
     this.debugView?.update(this.world);
     this.updateCamera();
+    this.parallax.update(this.cameras.main, time);
 
     this.registry.set('hudData', {
       fuelFraction: this.tank.fraction,

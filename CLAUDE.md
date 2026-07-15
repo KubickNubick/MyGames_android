@@ -31,7 +31,7 @@
 - `public/assets/` — по именам из `docs/ASSETS.md`
 
 ## Отладка через URL-параметры
-`?seed=42` — фиксированный seed · `?stage=desert` — этап · `?auto=gas` — автогаз (для скриншотов) · `?debug=1` — physics debug draw.
+`?seed=42` — фиксированный seed · `?stage=desert` — этап (countryside/desert/moon/cave) · `?auto=gas` — автогаз (для скриншотов) · `?debug=1` — physics debug draw · `?x=500` — спавн на x метров · `?scene=garage` — сразу в гараж.
 
 ## Правила работы
 - Работаем строго по фазам из `docs/PLAN.md`: одна фаза = одна задача. Сначала краткий план изменений по файлам, потом код.

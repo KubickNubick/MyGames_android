@@ -66,6 +66,13 @@ export class PlayerProfile {
     return true;
   }
 
+  /** Выбор этапа (валидность id проверяет вызывающий по data/stages). */
+  setSelectedStage(stageId: string): void {
+    if (typeof stageId !== 'string' || stageId.length === 0) return;
+    this.data.selectedStage = stageId;
+    this.persist();
+  }
+
   /** Обновить рекорд дистанции. true = новый рекорд. */
   updateBestDistance(stageId: string, distance: number): boolean {
     const best = this.data.bestDistance[stageId] ?? 0;
