@@ -29,9 +29,10 @@ import type { ResultsData } from './ResultsScene';
 
 const CAMERA_LOOKAHEAD_S = 0.55;
 const CAMERA_LERP = 0.08;
-const ZOOM_BASE = 1.05;
+// Видимая ширина мира по PLAN ≈ 18–26 м: 1280/50/1.4 ≈ 18.3 м … 1280/50/1.0 = 25.6 м.
+const ZOOM_BASE = 1.4;
 const ZOOM_PER_MS = 0.028; // зум-аут на м/с скорости
-const ZOOM_MIN = 0.6;
+const ZOOM_MIN = 1.0;
 
 export class GameScene extends Phaser.Scene {
   private world!: World;
